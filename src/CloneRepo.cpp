@@ -13,7 +13,7 @@
 #include <zlib.h>
 #include <stdexcept>
 #include"sha1.hpp"
-// --- cURL Helpers ---
+
 
 size_t write_callback(void* contents, size_t size, size_t nmemb, std::string* user_data) {
     size_t total_size = size * nmemb;
@@ -69,7 +69,7 @@ std::string send_post_request(const std::string& url, const std::string& post_da
     return fetch_response;
 }
 
-// --- Parsing Fetch Response ---
+
 
 std::unordered_map<std::string, std::string> parse_fetch_response(std::string& fetch_response) {
     std::unordered_map<std::string, std::string> references;
@@ -121,7 +121,7 @@ std::vector<uint8_t> extract_packfile_data(std::string& post_request_response) {
     return packfile_data;
 }
 
-// --- Improved Decompression Loop ---
+
 std::vector<uint8_t> decompress_object(const std::vector<uint8_t>& pack_data,
                                          size_t start_pos,
                                          size_t uncompressed_size,
@@ -139,8 +139,7 @@ std::vector<uint8_t> decompress_object(const std::vector<uint8_t>& pack_data,
     if (ret != Z_OK) {
         throw std::runtime_error("inflateInit failed");
     }
-    
-    // Improved loop: repeatedly call inflate until finished.
+
     while (true) {
         ret = inflate(&strm, Z_SYNC_FLUSH);
         if (ret == Z_STREAM_END) break;
@@ -148,7 +147,7 @@ std::vector<uint8_t> decompress_object(const std::vector<uint8_t>& pack_data,
             inflateEnd(&strm);
             throw std::runtime_error("inflate error: " + std::to_string(ret));
         }
-        // If no progress is made, break (to avoid infinite loop).
+
         if (strm.avail_in == 0) break;
     }
     
@@ -162,7 +161,7 @@ std::vector<uint8_t> decompress_object(const std::vector<uint8_t>& pack_data,
     return uncompressed_data;
 }
 
-// --- Global Object Storage ---
+
 std::unordered_map<std::string, std::vector<uint8_t>> parsed_objects;
 
 std::string compute_object_sha1(const std::vector<char>& data) {
@@ -172,7 +171,7 @@ std::string compute_object_sha1(const std::vector<char>& data) {
     return checksum.final();
 }
 
-// --- Base Object Lookup ---
+
 std::vector<uint8_t> get_base_object(const std::string& base_sha) {
     auto it = parsed_objects.find(base_sha);
     if (it != parsed_objects.end()) {
@@ -181,7 +180,7 @@ std::vector<uint8_t> get_base_object(const std::string& base_sha) {
     throw std::runtime_error("Base object lookup failed for SHA: " + base_sha);
 }
 
-// --- Store Object to Disk ---
+
 std::string store_object(const std::string& type, const std::vector<uint8_t>& uncompressed_data) {
     std::vector<char> uncompressed_char(uncompressed_data.begin(), uncompressed_data.end());
     std::ostringstream header_stream;
@@ -222,7 +221,6 @@ std::string store_object(const std::string& type, const std::vector<uint8_t>& un
     return object_hash;
 }
 
-// --- Delta Application ---
 std::vector<uint8_t> apply_delta(const std::vector<uint8_t>& base, const std::vector<uint8_t>& delta) {
     size_t pos = 0;
     auto read_varlen = [&](const std::vector<uint8_t>& stream, size_t &p) -> size_t {
@@ -306,7 +304,7 @@ void parse_packfile(const std::vector<uint8_t>& pack_data) {
             break;
         }
         
-        // Debug: capture raw header bytes.
+
         size_t header_start = pos;
         
         uint8_t byte = pack_data[pos++];
@@ -323,7 +321,6 @@ void parse_packfile(const std::vector<uint8_t>& pack_data) {
             shift += 7;
         }
         
-        // Debug print of raw header bytes.
         std::cout << "Object " << i+1 << " header raw bytes: ";
         for (size_t j = header_start; j < pos; j++) {
             std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)pack_data[j] << " ";
@@ -338,7 +335,6 @@ void parse_packfile(const std::vector<uint8_t>& pack_data) {
             uncompressed_data = decompress_object(pack_data, pos, size, compressed_consumed);
         } catch (const std::exception &e) {
             std::cerr << "Object " << i+1 << ": Decompression failed: " << e.what() << std::endl;
-            // Skip this object by attempting to move forward one byte (or implement more robust skipping).
             pos++;
             continue;
         }
@@ -445,8 +441,6 @@ void clone_repo(const std::string& repo_url, const std::string& dest_dir) {
     std::cout << "Final POST body length: " << post_data.length() << std::endl;
     
     std::string post_request_response = send_post_request(post_request_endpoint, post_request_content.str());
-    // For debugging, you might print the response here if it's not binary.
-    // std::cout << "Post Request Response: " << post_request_response << std::endl;
     
     std::vector<uint8_t> packfile_data = extract_packfile_data(post_request_response);
     std::cout << "Extracted packfile data size: " << packfile_data.size() << " bytes" << std::endl;
