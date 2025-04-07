@@ -1,59 +1,33 @@
-[![progress-banner](https://backend.codecrafters.io/progress/git/36013412-5bcf-4262-852b-e37f46466ba4)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
 
-This is a starting point for C++ solutions to the
-["Build Your Own Git" Challenge](https://codecrafters.io/challenges/git).
 
-In this challenge, you'll build a small Git implementation that's capable of
-initializing a repository, creating commits and cloning a public repository.
-Along the way we'll learn about the `.git` directory, Git objects (blobs,
-commits, trees etc.), Git's transfer protocols and more.
+# Custom Git (C++ Implementation)
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+This project is a low-level reimplementation of core Git features using C++. It closely follows the structure of Git’s internal object model and mimics its behavior through custom code.
 
-# Passing the first stage
+## Features Implemented
 
-The entry point for your Git implementation is in `src/Server.cpp`. Study and
-uncomment the relevant code, and push your changes to pass the first stage:
+- **Repository Setup**  
+  Ability to initialize a `.git` directory and configure internal paths.
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
-```
+- **Object Storage**
+  - **Blob Objects**: Read and write blob objects using Git’s compression format.
+  - **Tree Objects**: Read and construct tree objects referencing other blobs or trees.
+  - **Commit Objects**: Create commit objects pointing to tree hashes with metadata.
 
-That's all!
+- **Networking and Cloning**
+  - Connect to a remote Git server over TCP.
+  - Perform a smart protocol handshake with `git-upload-pack`.
+  - Parse and decompress the remote packfile.
+  - Reconstruct and store Git objects locally.
 
-# Stage 2 & beyond
+## How It Works
 
-Note: This section is for stages 2 and beyond.
+- Object headers and data are parsed manually from raw bytes.
+- Compressed data is handled using zlib.
+- Packfiles are interpreted and decompressed, and their contents written to the `.git/objects` directory.
+- Object hashes are computed using SHA-1 for consistency with Git.
 
-1. Ensure you have `cmake` installed locally
-1. Run `./your_program.sh` to run your Git implementation, which is implemented
-   in `src/Server.cpp`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+## Status
 
-# Testing locally
+Currently, this project supports reading and writing Git objects, creating commits, and cloning repositories via the smart protocol (partial packfile support). Remaining challenges include full support for delta objects (`ofs-delta`, `ref-delta`).
 
-The `your_program.sh` script is expected to operate on the `.git` folder inside
-the current working directory. If you're running this inside the root of this
-repository, you might end up accidentally damaging your repository's `.git`
-folder.
-
-We suggest executing `your_program.sh` in a different folder when testing
-locally. For example:
-
-```sh
-mkdir -p /tmp/testing && cd /tmp/testing
-/path/to/your/repo/your_program.sh init
-```
-
-To make this easier to type out, you could add a
-[shell alias](https://shapeshed.com/unix-alias/):
-
-```sh
-alias mygit=/path/to/your/repo/your_program.sh
-
-mkdir -p /tmp/testing && cd /tmp/testing
-mygit init
-```
