@@ -56,3 +56,10 @@ _deps
 
 build/
 vcpkg_installed
+
+# Local editor settings
+.vscode/
+
+# Legacy dependency manager files
+vcpkg.json
+vcpkg-configuration.json
